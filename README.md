@@ -73,3 +73,47 @@ API Dokumentasiyası (Swagger / OpenAPI)
 Bütün endpoint-ləri interaktiv şəkildə görmək və test etmək üçün tətbiq işə düşdükdən sonra brauzerdə aşağıdakı keçidə daxil olun:
 
 http://localhost:8080/swagger-ui/index.html
+
+## Authentication & Authorization (Week 2 Updates)
+
+Layihədə **Spring Security** və **JWT (JSON Web Tokens)** istifadə olunaraq rol əsaslı təhlükəsizlik sistemi tətbiq olunmuşdur.
+
+### 🛠 Security Architecture
+- **Password Encoding:** İstifadəçi şifrələri bazada plain-text olaraq saxlanılmır, `BCryptPasswordEncoder` ilə hash-lənir.
+- **Stateless Session:** Tətbiq stateless rejimdə çalışır, hər bir qorunan sorğu `Authorization: Bearer <token>` başlığı ilə yoxlanılır.
+- **Config-Driven Secrets:** JWT konfiqurasiyaları (`secret` və `expiration`) `application.yml` faylından idarə olunur.
+
+---
+
+### Roles & Permissions
+Sistemdə 2 əsas təhlükəsizlik rolu var: `USER` və `ADMIN`.
+
+| Endpoint Pattern | HTTP Method | Accessible Roles | Description |
+| :--- | :---: | :---: | :--- |
+| `/api/v1/auth/**` | POST | `Public` | Qeydiyyat və Giriş endpoint-ləri |
+| `/swagger-ui/**`, `/v3/api-docs/**` | GET | `Public` | Swagger API sənədləşməsi |
+| `/api/v1/**` | GET | `USER`, `ADMIN` | Məlumatları oxumaq (Read) |
+| `/api/v1/**` | POST, PUT, DELETE | `ADMIN` | Məlumatları yaratmaq, dəyişmək, silmək (Write) |
+
+---
+
+### Exception Handling (HTTP Status Codes)
+Düzgün REST semantikasına riayət olunaraq xətalar 2 yerə ayrılmışdır:
+
+1. **`401 Unauthorized` (`CustomAuthenticationEntryPoint`)**
+    - İstifadəçi giriş etmədikdə, token göndərmədikdə və ya token-in vaxtı bitdikdə qaytarılır.
+2. **`403 Forbidden` (`CustomAccessDeniedHandler`)**
+    - İstifadəçi sistemə daxil olub (məsələn `USER` rolundadır), lakin icazəsi olmayan resursa (məsələn `ADMIN`-ə aid `POST` endpoint-inə) müraciət etdikdə qaytarılır.
+
+---
+
+###  Authentication API Endpoints
+
+#### 1. Registration (`POST /api/v1/auth/register`)
+```json
+{
+  "username": "admin1",
+  "email": "admin@club.com",
+  "password": "password123",
+  "role": "ADMIN"
+}
