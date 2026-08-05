@@ -29,7 +29,7 @@ public class DepartmentService {
     }
 
     public List<DepartmentResponseDto> getAllDepartments() {
-        return departmentRepository.findAll().stream()
+        return departmentRepository.findAllWithMembers().stream()
                 .map(this::mapToResponseDto)
                 .collect(Collectors.toList());
     }
