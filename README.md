@@ -1,10 +1,10 @@
-# ⚽ Football Club Management System API
+#  Football Club Management System API
 
 A RESTful API developed for the Football Club Management System. This project is designed to manage the club's departments and staff members.
 
 ---
 
-## 🚀 Technologies
+##  Technologies
 
 * **Java**: 21
 * **Framework**: Spring Boot 3.3.0
@@ -17,7 +17,7 @@ A RESTful API developed for the Football Club Management System. This project is
 
 ---
 
-## ⚙️ Configuration (Example application.yml)
+##  Configuration (Example application.yml)
 
 Example configuration of the `src/main/resources/application.yml` file:
 
