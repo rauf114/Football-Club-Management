@@ -5,6 +5,7 @@ import com.example.footballclubmanagement.dto.response.DepartmentResponseDto;
 import com.example.footballclubmanagement.entity.Department;
 import com.example.footballclubmanagement.exception.ResourceNotFoundException;
 import com.example.footballclubmanagement.repository.DepartmentRepository;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -45,5 +46,24 @@ public class DepartmentService {
         dto.setName(department.getName());
         dto.setDescription(department.getDescription());
         return dto;
+    }
+
+
+    public DepartmentResponseDto updateDepartment(Long id, DepartmentRequestDto dto) {
+        Department department = departmentRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Department not found with id: " + id));
+
+        department.setName(dto.getName());
+        department.setDescription(dto.getDescription());
+
+        Department updated = departmentRepository.save(department);
+        return mapToResponseDto(updated);
+    }
+
+    public void deleteDepartment(Long id) {
+        if (!departmentRepository.existsById(id)) {
+            throw new EntityNotFoundException("Department not found with id: " + id);
+        }
+        departmentRepository.deleteById(id);
     }
 }
