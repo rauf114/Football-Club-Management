@@ -14,10 +14,19 @@ import com.example.footballclubmanagement.entity.TeamMember;
 import com.example.footballclubmanagement.exception.ResourceNotFoundException;
 import com.example.footballclubmanagement.repository.DepartmentRepository;
 import com.example.footballclubmanagement.repository.TeamMemberRepository;
+import com.example.footballclubmanagement.specification.TeamMemberSpecification;
+import com.example.footballclubmanagement.util.Role;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -87,5 +96,37 @@ public class TeamMemberService {
         dto.setSalary(member.getSalary());
         dto.setDepartmentName(member.getDepartment().getName());
         return dto;
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public List<TeamMemberResponseDto> createMembersInBatch(List<TeamMemberCreateDto> dtos) {
+        List<TeamMemberResponseDto> createdMembers = new ArrayList<>();
+
+        for (TeamMemberCreateDto dto : dtos) {
+            if (dto.getEmail().contains("error")) {
+                throw new RuntimeException("Simulated exception for transactional rollback test!");
+            }
+
+            TeamMemberResponseDto created = createMember(dto);
+            createdMembers.add(created);
+        }
+
+        return createdMembers;
+    }
+
+    public List<TeamMemberResponseDto> searchMembers(
+            String firstName, String lastName, Role role, Long departmentId, BigDecimal minSalary, BigDecimal maxSalary) {
+
+        Specification<TeamMember> spec = Specification
+                .where(TeamMemberSpecification.hasFirstName(firstName))
+                .and(TeamMemberSpecification.hasLastName(lastName))
+                .and(TeamMemberSpecification.hasRole(role))
+                .and(TeamMemberSpecification.hasDepartmentId(departmentId))
+                .and(TeamMemberSpecification.salaryBetween(minSalary, maxSalary));
+
+        return teamMemberRepository.findAll(spec)
+                .stream()
+                .map(this::mapToResponseDto)
+                .collect(Collectors.toList());
     }
 }

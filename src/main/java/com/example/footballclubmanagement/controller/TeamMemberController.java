@@ -4,6 +4,7 @@ import com.example.footballclubmanagement.dto.request.TeamMemberCreateDto;
 import com.example.footballclubmanagement.dto.response.ApiResponse;
 import com.example.footballclubmanagement.dto.response.TeamMemberResponseDto;
 import com.example.footballclubmanagement.service.TeamMemberService;
+import com.example.footballclubmanagement.util.Role;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -16,6 +17,9 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.math.BigDecimal;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/members")
@@ -106,5 +110,22 @@ public class TeamMemberController {
                 .data(null)
                 .build();
         return ResponseEntity.ok(response);
+    }
+
+
+    @GetMapping("/search")
+    @Operation(summary = "Search team members dynamically", description = "Filters members by name, role, department, and salary range.")
+    public ResponseEntity<ApiResponse<List<TeamMemberResponseDto>>> searchMembers(
+            @RequestParam(required = false) String firstName,
+            @RequestParam(required = false) String lastName,
+            @RequestParam(required = false) Role role,
+            @RequestParam(required = false) Long departmentId,
+            @RequestParam(required = false) BigDecimal minSalary,
+            @RequestParam(required = false) BigDecimal maxSalary) {
+
+        List<TeamMemberResponseDto> results = teamMemberService.searchMembers(
+                firstName, lastName, role, departmentId, minSalary, maxSalary);
+
+        return ResponseEntity.ok(ApiResponse.success(results));
     }
 }

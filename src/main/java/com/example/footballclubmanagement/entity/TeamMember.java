@@ -5,6 +5,8 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.math.BigDecimal;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Table(name = "team_members")
@@ -39,4 +41,9 @@ public class TeamMember {
     @JoinColumn(name = "department_id", nullable = false)
     @ToString.Exclude
     private Department department;
+
+    @Builder.Default
+    @ManyToMany(mappedBy = "members")
+    @ToString.Exclude
+    private Set<Match> matches = new HashSet<>();
 }
