@@ -125,3 +125,21 @@ Following proper REST semantics, errors are divided into 2 categories:
 "password": "password123"
 }
 ```
+
+### Caching & Cache Invalidation
+- **Spring Cache Integration:** Implemented `@Cacheable` abstraction for read-heavy operations (e.g., Department endpoints) to reduce database load.
+- **Cache Invalidation Strategy:** Integrated `@CacheEvict(allEntries = true)` on data modification endpoints (`POST`, `PUT`, `DELETE`) to guarantee data consistency and eliminate stale responses.
+
+### Secure File Storage Service
+- **File Upload/Download API:** Built dedicated `/api/v1/files` endpoints handling file operations.
+- **Security & Content Validation:**
+    - **MIME-Type Whitelist:** Strict validation verifying real MIME types (`image/jpeg`, `image/png`, `application/pdf`) rather than relying solely on file extensions.
+    - **Size Limit Enforcement:** Hard limit of **5MB** per file with custom exception handling.
+
+### Asynchronous & Scheduled Tasks
+- **Non-Blocking Asynchronous Processing (`@Async`):** Implemented background email notification triggers to execute without delaying HTTP response threads.
+- **Automated Background Scheduling (`@Scheduled`):** Configured automated Cron tasks for periodic system maintenance and temporary file storage cleanup.
+
+### Configuration & API Documentation
+- **Multi-Environment Profiles:** Separated profile configurations into `application-dev.yml` (Development) and `application-prod.yml` (Production).
+- **Swagger / OpenAPI 3.0:** Updated API documentation with interactive UI and JWT Bearer Authorization support.

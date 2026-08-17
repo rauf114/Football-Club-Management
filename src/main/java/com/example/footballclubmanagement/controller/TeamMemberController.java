@@ -14,6 +14,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -114,17 +117,18 @@ public class TeamMemberController {
 
 
     @GetMapping("/search")
-    @Operation(summary = "Search team members dynamically", description = "Filters members by name, role, department, and salary range.")
-    public ResponseEntity<ApiResponse<List<TeamMemberResponseDto>>> searchMembers(
+    @Operation(summary = "Search team members dynamically", description = "Filters members by name, role, department, and salary range with pagination.")
+    public ResponseEntity<ApiResponse<Page<TeamMemberResponseDto>>> searchMembers(
             @RequestParam(required = false) String firstName,
             @RequestParam(required = false) String lastName,
             @RequestParam(required = false) Role role,
             @RequestParam(required = false) Long departmentId,
             @RequestParam(required = false) BigDecimal minSalary,
-            @RequestParam(required = false) BigDecimal maxSalary) {
+            @RequestParam(required = false) BigDecimal maxSalary,
+            @PageableDefault(size = 10, sort = "id") Pageable pageable) {
 
-        List<TeamMemberResponseDto> results = teamMemberService.searchMembers(
-                firstName, lastName, role, departmentId, minSalary, maxSalary);
+        Page<TeamMemberResponseDto> results = teamMemberService.searchMembers(
+                firstName, lastName, role, departmentId, minSalary, maxSalary, pageable);
 
         return ResponseEntity.ok(ApiResponse.success(results));
     }

@@ -1,12 +1,5 @@
-package com.example.footballclubmanagement.service; // paketi layihənə uyğun tənzimlə
+package com.example.footballclubmanagement.service;
 
-//import com.example.footballclubmanagement.dto.*;
-//import com.example.dto.response.TeamMemberResponseDto;
-//import com.example.entity.Department;
-//import com.example.entity.TeamMember;
-//import com.example.exception.ResourceNotFoundException;
-//import com.example.repository.DepartmentRepository;
-//import com.example.repository.TeamMemberRepository;
 import com.example.footballclubmanagement.dto.request.TeamMemberCreateDto;
 import com.example.footballclubmanagement.dto.response.TeamMemberResponseDto;
 import com.example.footballclubmanagement.entity.Department;
@@ -26,7 +19,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -86,18 +78,6 @@ public class TeamMemberService {
         teamMemberRepository.delete(member);
     }
 
-    private TeamMemberResponseDto mapToResponseDto(TeamMember member) {
-        TeamMemberResponseDto dto = new TeamMemberResponseDto();
-        dto.setId(member.getId());
-        dto.setFirstName(member.getFirstName());
-        dto.setLastName(member.getLastName());
-        dto.setEmail(member.getEmail());
-        dto.setRole(member.getRole());
-        dto.setSalary(member.getSalary());
-        dto.setDepartmentName(member.getDepartment().getName());
-        return dto;
-    }
-
     @Transactional(rollbackFor = Exception.class)
     public List<TeamMemberResponseDto> createMembersInBatch(List<TeamMemberCreateDto> dtos) {
         List<TeamMemberResponseDto> createdMembers = new ArrayList<>();
@@ -114,19 +94,49 @@ public class TeamMemberService {
         return createdMembers;
     }
 
-    public List<TeamMemberResponseDto> searchMembers(
-            String firstName, String lastName, Role role, Long departmentId, BigDecimal minSalary, BigDecimal maxSalary) {
+    @Transactional(rollbackFor = Exception.class)
+    public TeamMemberResponseDto transferMemberToDepartment(Long memberId, Long newDepartmentId) {
+        TeamMember member = teamMemberRepository.findById(memberId)
+                .orElseThrow(() -> new ResourceNotFoundException("Team member not found with id: " + memberId));
 
-        Specification<TeamMember> spec = Specification
-                .where(TeamMemberSpecification.hasFirstName(firstName))
-                .and(TeamMemberSpecification.hasLastName(lastName))
-                .and(TeamMemberSpecification.hasRole(role))
-                .and(TeamMemberSpecification.hasDepartmentId(departmentId))
-                .and(TeamMemberSpecification.salaryBetween(minSalary, maxSalary));
+        Department newDepartment = departmentRepository.findById(newDepartmentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Department not found with id: " + newDepartmentId));
 
-        return teamMemberRepository.findAll(spec)
-                .stream()
-                .map(this::mapToResponseDto)
-                .collect(Collectors.toList());
+        member.setDepartment(newDepartment);
+        TeamMember updatedMember = teamMemberRepository.save(member);
+
+        newDepartment.setDescription(newDepartment.getDescription() + " (Last transfer processed for member: " + member.getId() + ")");
+        departmentRepository.save(newDepartment);
+
+        return mapToResponseDto(updatedMember);
+    }
+
+    public Page<TeamMemberResponseDto> searchMembers(
+            String firstName, String lastName, Role role, Long departmentId,
+            BigDecimal minSalary, BigDecimal maxSalary, Pageable pageable) {
+
+        if (minSalary != null && maxSalary != null && minSalary.compareTo(maxSalary) > 0) {
+            throw new IllegalArgumentException("minSalary cannot be greater than maxSalary");
+        }
+
+        Specification<TeamMember> spec = TeamMemberSpecification.filterMembers(
+                firstName, lastName, role, departmentId, minSalary, maxSalary);
+
+        return teamMemberRepository.findAll(spec, pageable)
+                .map(this::mapToResponseDto);
+    }
+
+    private TeamMemberResponseDto mapToResponseDto(TeamMember member) {
+        TeamMemberResponseDto dto = new TeamMemberResponseDto();
+        dto.setId(member.getId());
+        dto.setFirstName(member.getFirstName());
+        dto.setLastName(member.getLastName());
+        dto.setEmail(member.getEmail());
+        dto.setRole(member.getRole());
+        dto.setSalary(member.getSalary());
+        if (member.getDepartment() != null) {
+            dto.setDepartmentName(member.getDepartment().getName());
+        }
+        return dto;
     }
 }
